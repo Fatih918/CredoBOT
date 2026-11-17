@@ -6,7 +6,11 @@ export type CustomerServiceRuntimeConfig = {
     faqs: Array<{ id: string; title: string; keywords: string[]; response: string }>;
 };
 
+let runtimeConfigCache: { value: CustomerServiceRuntimeConfig; expiresAt: number } | null = null;
+
 export async function getCustomerServiceRuntimeConfig(): Promise<CustomerServiceRuntimeConfig> {
+    if (runtimeConfigCache && runtimeConfigCache.expiresAt > Date.now()) return runtimeConfigCache.value;
+
     const [settings, faqs] = await Promise.all([
         Database.customerServiceSettings.findUnique({ where: { key: "default" } }),
         Database.customerServiceFaqEntry.findMany({
@@ -16,11 +20,13 @@ export async function getCustomerServiceRuntimeConfig(): Promise<CustomerService
         }),
     ]);
 
-    return {
+    const value = {
         enabled: settings?.enabled ?? true,
         welcomeMessage: settings?.welcomeMessage ?? null,
         faqs,
     };
+    runtimeConfigCache = { value, expiresAt: Date.now() + 10_000 };
+    return value;
 }
 
 export function resolveConfiguredFaq(
