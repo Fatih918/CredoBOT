@@ -5,17 +5,23 @@ import {
 } from "./customer-service-eligibility";
 import { getPublicCatalog } from "./catalog-client";
 import { formatPriceList } from "./price-list.formatter";
+import {
+    formatCustomerServiceFaq,
+    formatCustomerServiceWelcome,
+    resolveCustomerServiceFaq,
+} from "./customer-service-faq";
+import { registerCustomerContact } from "./customer-conversation.service";
 
-const PRICE_LIST_INTENT =
-    /(?:\b(?:harga|tarif)\b|\bprice\s*list\b|\bdaftar\s+harga\b|\blist\s+harga\b|\bpaket\s+harga\b)/i;
-
-function isPriceListRequest(body: string | undefined): boolean {
-    return Boolean(body && PRICE_LIST_INTENT.test(body.trim()));
+function withWelcome(response: string, isFirstContact: boolean): string {
+    return isFirstContact
+        ? `${formatCustomerServiceWelcome()}\n\n━━━━━━━━━━━━━━\n\n${response}`
+        : response;
 }
 
 /**
- * Credo-Store customer service is restricted to eligible private chats.
- * Group messages continue through the existing group handlers unchanged.
+ * Deterministic Credo-Store automation for eligible private chats only.
+ * Unknown questions are not guessed; they continue through the existing
+ * message pipeline until a dedicated human-handover flow is implemented.
  */
 export class CustomerServiceHandler {
     static async handle(
@@ -27,28 +33,65 @@ export class CustomerServiceHandler {
             !isEligibleForCustomerService(message) ||
             context?.isGroup ||
             context?.isCmd ||
-            context?.cmd ||
-            !isPriceListRequest(message.body)
+            context?.cmd
         ) {
             return false;
         }
 
+        let isFirstContact = false;
+
         try {
-            const catalog = await getPublicCatalog();
-            await Chisato.sendText(
-                context.from,
-                formatPriceList(catalog),
-                message
-            );
+            isFirstContact = await registerCustomerContact(message.from);
         } catch {
-            // Never fall back to old/static prices when the live catalog is down.
-            await Chisato.sendText(
-                context.from,
-                "Maaf, daftar harga Credo Store sedang tidak bisa diakses. Aku belum bisa memastikan harga terbaru. Silakan hubungi admin Credo Store untuk konfirmasi.",
-                message
-            );
+            // Customer-service replies must remain available if first-contact
+            // persistence is temporarily unavailable. Greeting is skipped.
         }
 
-        return true;
+        const intent = resolveCustomerServiceFaq(message.body);
+
+        if (intent === "price-list") {
+            let response: string;
+
+            try {
+                const catalog = await getPublicCatalog();
+                response = formatPriceList(catalog);
+            } catch {
+                // Never fall back to old/static prices when the live catalog is down.
+                response =
+                    "Maaf, daftar harga Credo Store sedang tidak bisa diakses. Aku belum bisa memastikan harga terbaru. Silakan hubungi admin Credo Store untuk konfirmasi.";
+            }
+
+            await Chisato.sendText(
+                context.from,
+                withWelcome(response, isFirstContact),
+                message
+            );
+            return true;
+        }
+
+        if (intent) {
+            const response =
+                intent === "greeting" && isFirstContact
+                    ? formatCustomerServiceWelcome()
+                    : formatCustomerServiceFaq(intent);
+
+            await Chisato.sendText(
+                context.from,
+                withWelcome(response, isFirstContact && intent !== "greeting"),
+                message
+            );
+            return true;
+        }
+
+        if (isFirstContact) {
+            await Chisato.sendText(
+                context.from,
+                formatCustomerServiceWelcome(),
+                message
+            );
+            return true;
+        }
+
+        return false;
     }
 }
