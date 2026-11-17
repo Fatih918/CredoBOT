@@ -11,6 +11,7 @@ import { groupAuthRoutes } from "./routes/group-auth";
 import { groupAdminRoutes } from "./routes/group-admin";
 import { configRoutes } from "./routes/config";
 import { changelogRoutes } from "./routes/changelog";
+import { customerServiceRoutes } from "./routes/customer-service";
 import { authMiddleware } from "./middleware/auth.middleware";
 import { setDashboardLogHandler } from "../core/logger/logger.service";
 import { ipSecurityService } from "./services/ip-security.service";
@@ -84,6 +85,7 @@ export class DashboardServer {
         this.fastify.register(logsRoutes, { prefix: "/api/logs" });
         this.fastify.register(configRoutes, { prefix: "/api/config" });
         this.fastify.register(changelogRoutes, { prefix: "/api/changelog" });
+        this.fastify.register(customerServiceRoutes, { prefix: "/api/customer-service" });
 
         // SPA fallback: the Svelte app uses clean history-mode URLs
         // (/login, /dashboard, /group-admin). Any non-API GET that doesn't map
