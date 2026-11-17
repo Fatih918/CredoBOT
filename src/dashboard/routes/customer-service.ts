@@ -49,7 +49,7 @@ export async function customerServiceRoutes(fastify: FastifyInstance) {
 
     fastify.patch("/settings", async (request: FastifyRequest<{ Body: any }>, reply) => {
         if (!authorize(request, reply, true)) return;
-        const body = request.body || {};
+        const body = (request.body ?? {}) as Record<string, unknown>;
         const data: { enabled?: boolean; welcomeMessage?: string | null } = {};
         if (typeof body.enabled === "boolean") data.enabled = body.enabled;
         if (typeof body.welcomeMessage === "string") {
@@ -82,7 +82,7 @@ export async function customerServiceRoutes(fastify: FastifyInstance) {
 
     fastify.post("/faqs", async (request: FastifyRequest<{ Body: any }>, reply) => {
         if (!authorize(request, reply, true)) return;
-        const body = request.body || {};
+        const body = (request.body ?? {}) as Record<string, unknown>;
         const title = typeof body.title === "string" ? body.title.trim() : "";
         const response = typeof body.response === "string" ? body.response.trim() : "";
         const keywords = normalizeKeywords(body.keywords);
@@ -103,7 +103,7 @@ export async function customerServiceRoutes(fastify: FastifyInstance) {
         if (!authorize(request, reply, true)) return;
         const { id } = request.params;
         if (!/^[a-f0-9]{24}$/i.test(id)) return reply.status(400).send({ success: false, message: "Invalid FAQ id" });
-        const body = request.body || {};
+        const body = (request.body ?? {}) as Record<string, unknown>;
         const data: { title?: string; response?: string; keywords?: string[]; enabled?: boolean } = {};
         if (typeof body.title === "string") {
             const title = body.title.trim();
