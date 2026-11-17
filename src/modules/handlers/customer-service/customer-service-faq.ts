@@ -5,7 +5,7 @@ export type CustomerServiceFaqIntent =
     | "greeting";
 
 const PRICE_LIST_PATTERN =
-    /(?:\b(?:harga|tarif|price\s*list)\b|\bdaftar\s+harga\b|\blist\s+harga\b|\bpaket\s+harga\b)/i;
+    /(?:\b(?:harga|tarif(?:nya)?|price\s*list)\b|\bdaftar\s+harga\b|\blist\s+harga\b|\bpaket\s+harga\b)/i;
 const ORDER_PATTERN =
     /(?:\b(?:cara|bagaimana)\s+(?:untuk\s+)?(?:order|pesan|pemesanan)\b|\b(?:mau|ingin)\s+(?:order|pesan)\b|\b(?:order|pesan|pemesanan)\s+(?:gimana|bagaimana|caranya)\b|\bhow\s+to\s+order\b)/i;
 const SERVICE_PATTERN =
@@ -36,7 +36,7 @@ export function formatCustomerServiceFaq(
             return [
                 "*CARA ORDER CREDO STORE*",
                 "",
-                "1. Buka katalog dan pilih layanan atau paket yang sesuai.",
+                "1. Pilih layanan atau paket yang sesuai dari katalog.",
                 "2. Buka paket, lalu isi detail pesanan yang diminta.",
                 "3. Periksa ringkasan pesanan.",
                 "4. Lanjutkan percakapan melalui WhatsApp untuk konfirmasi dengan toko.",
@@ -63,7 +63,8 @@ export function formatCustomerServiceFaq(
     }
 }
 
-export function formatCustomerServiceWelcome(): string {
+export function formatCustomerServiceWelcome(customMessage?: string | null): string {
+    if (customMessage?.trim()) return customMessage.trim();
     return [
         "*Halo! Selamat datang di Credo Store.*",
         "",
