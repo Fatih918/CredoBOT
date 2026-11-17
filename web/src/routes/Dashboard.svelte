@@ -11,6 +11,7 @@
     import Commands from "./dashboard/Commands.svelte";
     import SettingsView from "./dashboard/Settings.svelte";
     import Security from "./dashboard/Security.svelte";
+    import CustomerService from "./dashboard/CustomerService.svelte";
     import WhatsNew from "../components/WhatsNew.svelte";
 
     let ready = $state(false);
@@ -25,6 +26,7 @@
         { key: "logs", icon: "fa-list", label: "Logs" },
         { key: "commands", icon: "fa-terminal", label: "Commands" },
         { key: "settings", icon: "fa-gear", label: "Settings" },
+        { key: "customer-service", icon: "fa-headset", label: "Customer Service" },
         { key: "security", icon: "fa-shield-halved", label: "Security", owner: true },
     ];
     let nav = $derived(NAV.filter((n) => !n.owner || me?.role === "owner"));
@@ -108,6 +110,7 @@
                 {:else if view === "logs"}<Logs />
                 {:else if view === "commands"}<Commands {me} />
                 {:else if view === "settings"}<SettingsView {me} />
+                {:else if view === "customer-service"}<CustomerService {me} />
                 {:else if view === "security"}<Security {me} />
                 {/if}
             </div>
