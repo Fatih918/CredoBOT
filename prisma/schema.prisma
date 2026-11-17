@@ -161,3 +161,12 @@ model GroupAuditLog {
 
   @@index([groupId, createdAt])
 }
+
+// Dedicated customer-service identity and first-contact state.
+// Kept separate from the bot's User model (limits, AFK, leveling, etc.).
+model CustomerConversation {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  whatsappJid String   @unique
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @updatedAt
+}
