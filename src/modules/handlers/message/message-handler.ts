@@ -19,6 +19,7 @@ import { StringUtils } from "../../../utils/core/string-utils";
 import { formatExample } from "../../../utils";
 import { tryConsumeLoginOtp } from "../../../dashboard/routes/group-auth";
 import { resolveToPnJid } from "../../../utils/jid-resolver";
+import { CustomerServiceHandler } from "../customer-service/customer-service.handler";
 
 export class MessageHandler {
     private Database = {
@@ -124,6 +125,18 @@ export class MessageHandler {
                 // Check if user has active adminpanel session
                 if (await SessionHandler.handle(Chisato, message, context)) {
                     return; // Session handled, skip normal command processing
+                }
+
+                // Customer-service is isolated to eligible private chats. Commands,
+                // OTPs, admin sessions, and group messages stay on existing paths.
+                if (
+                    await CustomerServiceHandler.handle(
+                        Chisato,
+                        message,
+                        context
+                    )
+                ) {
+                    return;
                 }
 
                 // Log message/command
