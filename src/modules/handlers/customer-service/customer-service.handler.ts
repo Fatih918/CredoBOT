@@ -11,6 +11,7 @@ import {
     resolveCustomerServiceFaq,
 } from "./customer-service-faq";
 import { registerCustomerContact } from "./customer-conversation.service";
+import { getCustomerServiceRuntimeConfig, resolveConfiguredFaq } from "./customer-service-config.service";
 
 function withWelcome(response: string, isFirstContact: boolean): string {
     return isFirstContact
@@ -38,12 +39,20 @@ export class CustomerServiceHandler {
             return false;
         }
 
-        let isFirstContact = false;
+        let runtimeConfig = { enabled: true, welcomeMessage: null as string | null, faqs: [] as Array<{ id: string; title: string; keywords: string[]; response: string }> };
+        try {
+            runtimeConfig = await getCustomerServiceRuntimeConfig();
+        } catch {
+            // Preserve the deterministic built-in behavior if dashboard settings
+            // cannot be read; never use custom stale or partially loaded data.
+        }
+        if (!runtimeConfig.enabled) return false;
 
+        let isFirstContact = false;
         try {
             isFirstContact = await registerCustomerContact(message.from);
         } catch {
-            // Customer-service replies must remain available if first-contact
+            // Customer-service replies remain available if first-contact
             // persistence is temporarily unavailable. Greeting is skipped.
         }
 
@@ -63,7 +72,19 @@ export class CustomerServiceHandler {
 
             await Chisato.sendText(
                 context.from,
-                withWelcome(response, isFirstContact),
+                withWelcome(response, isFirstContact, runtimeConfig.welcomeMessage),
+                message
+            );
+            return true;
+        }
+
+        const configuredFaqResponse = intent === "price-list"
+            ? null
+            : resolveConfiguredFaq(message.body, runtimeConfig.faqs);
+        if (configuredFaqResponse) {
+            await Chisato.sendText(
+                context.from,
+                withWelcome(configuredFaqResponse, isFirstContact, runtimeConfig.welcomeMessage),
                 message
             );
             return true;
@@ -77,7 +98,7 @@ export class CustomerServiceHandler {
 
             await Chisato.sendText(
                 context.from,
-                withWelcome(response, isFirstContact && intent !== "greeting"),
+                withWelcome(response, isFirstContact && intent !== "greeting", runtimeConfig.welcomeMessage),
                 message
             );
             return true;
@@ -86,7 +107,7 @@ export class CustomerServiceHandler {
         if (isFirstContact) {
             await Chisato.sendText(
                 context.from,
-                formatCustomerServiceWelcome(),
+                formatCustomerServiceWelcome(runtimeConfig.welcomeMessage),
                 message
             );
             return true;
