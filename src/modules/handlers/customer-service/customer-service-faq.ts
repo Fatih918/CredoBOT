@@ -7,7 +7,7 @@ export type CustomerServiceFaqIntent =
 const PRICE_LIST_PATTERN =
     /(?:\b(?:harga|tarif|price\s*list)\b|\bdaftar\s+harga\b|\blist\s+harga\b|\bpaket\s+harga\b)/i;
 const ORDER_PATTERN =
-    /(?:\b(?:cara|bagaimana)\s+(?:untuk\s+)?(?:order|pesan|pemesanan)\b|\b(?:order|pesan|pemesanan)\s+(?:gimana|bagaimana|caranya)\b|\bhow\s+to\s+order\b)/i;
+    /(?:\b(?:cara|bagaimana)\s+(?:untuk\s+)?(?:order|pesan|pemesanan)\b|\b(?:mau|ingin)\s+(?:order|pesan)\b|\b(?:order|pesan|pemesanan)\s+(?:gimana|bagaimana|caranya)\b|\bhow\s+to\s+order\b)/i;
 const SERVICE_PATTERN =
     /(?:\b(?:layanan|service|joki|per\s*star|tier\s*progression)\b)/i;
 const GREETING_PATTERN =
