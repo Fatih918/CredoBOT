@@ -18,22 +18,26 @@ export async function registerCustomerContact(
         return false;
     }
 
+    const existing = await Database.customerConversation.findUnique({
+        where: { whatsappJid: jid },
+        select: { id: true },
+    });
+
+    if (existing) return false;
+
     try {
         await Database.customerConversation.create({
             data: { whatsappJid: jid },
         });
         return true;
     } catch (error) {
+        // A concurrent first message may win the unique-key race.
         if (
             typeof error === "object" &&
             error !== null &&
             "code" in error &&
             error.code === "P2002"
         ) {
-            await Database.customerConversation.update({
-                where: { whatsappJid: jid },
-                data: { lastSeenAt: new Date() },
-            });
             return false;
         }
 
