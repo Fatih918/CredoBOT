@@ -63,7 +63,8 @@ export function formatCustomerServiceFaq(
     }
 }
 
-export function formatCustomerServiceWelcome(): string {
+export function formatCustomerServiceWelcome(customMessage?: string | null): string {
+    if (customMessage?.trim()) return customMessage.trim();
     return [
         "*Halo! Selamat datang di Credo Store.*",
         "",
