@@ -3,17 +3,23 @@ import type { MessageSerialize } from "../../../types/structure/serialize";
 import {
     isEligibleForCustomerService,
 } from "./customer-service-eligibility";
+import { getPublicCatalog } from "./catalog-client";
+import { formatPriceList } from "./price-list.formatter";
+
+const PRICE_LIST_INTENT =
+    /(?:\b(?:harga|tarif)\b|\bprice\s*list\b|\bdaftar\s+harga\b|\blist\s+harga\b|\bpaket\s+harga\b)/i;
+
+function isPriceListRequest(body: string | undefined): boolean {
+    return Boolean(body && PRICE_LIST_INTENT.test(body.trim()));
+}
 
 /**
- * Entry point for Credo-Store private-chat automation.
- *
- * This PR intentionally establishes the isolated integration boundary only.
- * Greeting, catalog lookup, and FAQ responses are added in later PRs after
- * their business configuration and persistence are defined.
+ * Credo-Store customer service is restricted to eligible private chats.
+ * Group messages continue through the existing group handlers unchanged.
  */
 export class CustomerServiceHandler {
     static async handle(
-        _Chisato: Client,
+        Chisato: Client,
         message: MessageSerialize,
         context: any
     ): Promise<boolean> {
@@ -21,13 +27,28 @@ export class CustomerServiceHandler {
             !isEligibleForCustomerService(message) ||
             context?.isGroup ||
             context?.isCmd ||
-            context?.cmd
+            context?.cmd ||
+            !isPriceListRequest(message.body)
         ) {
             return false;
         }
 
-        // No automated response in this foundation PR.
-        // Returning false preserves existing AFK and normal message handling.
-        return false;
+        try {
+            const catalog = await getPublicCatalog();
+            await Chisato.sendText(
+                context.from,
+                formatPriceList(catalog),
+                message
+            );
+        } catch {
+            // Never fall back to old/static prices when the live catalog is down.
+            await Chisato.sendText(
+                context.from,
+                "Maaf, daftar harga Credo Store sedang tidak bisa diakses. Aku belum bisa memastikan harga terbaru. Silakan hubungi admin Credo Store untuk konfirmasi.",
+                message
+            );
+        }
+
+        return true;
     }
 }
