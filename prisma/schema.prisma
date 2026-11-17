@@ -169,3 +169,24 @@ model CustomerConversation {
   whatsappJid String   @unique
   firstSeenAt DateTime @default(now())
 }
+
+ 
+// Business-facing customer-service settings. Catalog prices remain owned by Credo Store.
+model CustomerServiceSettings {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  key            String   @unique @default("default")
+  enabled        Boolean  @default(true)
+  welcomeMessage String?
+  updatedAt      DateTime @updatedAt
+}
+
+// Custom deterministic FAQ entries managed from the dashboard.
+model CustomerServiceFaqEntry {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  keywords  String[]
+  response  String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
