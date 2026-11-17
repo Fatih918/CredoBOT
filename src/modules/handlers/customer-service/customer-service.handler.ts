@@ -78,9 +78,7 @@ export class CustomerServiceHandler {
             return true;
         }
 
-        const configuredFaqResponse = intent === "price-list"
-            ? null
-            : resolveConfiguredFaq(message.body, runtimeConfig.faqs);
+        const configuredFaqResponse = resolveConfiguredFaq(message.body, runtimeConfig.faqs);
         if (configuredFaqResponse) {
             await Chisato.sendText(
                 context.from,
