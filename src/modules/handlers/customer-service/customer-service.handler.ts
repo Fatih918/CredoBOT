@@ -13,9 +13,9 @@ import {
 import { registerCustomerContact } from "./customer-conversation.service";
 import { getCustomerServiceRuntimeConfig, resolveConfiguredFaq } from "./customer-service-config.service";
 
-function withWelcome(response: string, isFirstContact: boolean): string {
+function withWelcome(response: string, isFirstContact: boolean, welcomeMessage?: string | null): string {
     return isFirstContact
-        ? `${formatCustomerServiceWelcome()}\n\n━━━━━━━━━━━━━━\n\n${response}`
+        ? `${formatCustomerServiceWelcome(welcomeMessage)}\n\n━━━━━━━━━━━━━━\n\n${response}`
         : response;
 }
 
@@ -93,7 +93,7 @@ export class CustomerServiceHandler {
         if (intent) {
             const response =
                 intent === "greeting" && isFirstContact
-                    ? formatCustomerServiceWelcome()
+                    ? formatCustomerServiceWelcome(runtimeConfig.welcomeMessage)
                     : formatCustomerServiceFaq(intent);
 
             await Chisato.sendText(
